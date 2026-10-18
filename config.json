@@ -1,0 +1,15 @@
+{
+    "name": "ГОСТ Панель",
+    "guid": "asc.{E5B4A112-9876-4F23-8B12-79A3482C5E99}",
+    "version": "1.0.0",
+    "variations": [
+        {
+            "description": "Боковая панель быстрых стилей по ГОСТ",
+            "url": "index.html",
+            "icons": ["icon.png"],
+            "isViewer": false,
+            "EditorsSupport": ["word"],
+            "type": "panelRight"
+        }
+    ]
+}

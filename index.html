@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>ГОСТ Панель</title>
+<script type="text/javascript" src="https://onlyoffice.github.io/sdkjs-plugins/v1/plugins.js"></script>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        font-family: "Segoe UI", Roboto, sans-serif;
+        font-size: 12px;
+        margin: 0;
+        padding: 10px 12px 16px;
+        background: #fff;
+        color: #222;
+    }
+    h3 {
+        font-size: 12px;
+        font-weight: 600;
+        color: #555;
+        margin: 16px 0 6px;
+        padding-bottom: 3px;
+        border-bottom: 1px solid #e2e2e2;
+    }
+    h3:first-child { margin-top: 0; }
+    .btn {
+        display: block;
+        width: 100%;
+        padding: 7px 10px;
+        margin-bottom: 5px;
+        background: #f6f6f6;
+        border: 1px solid #d6d6d6;
+        border-radius: 3px;
+        text-align: left;
+        cursor: pointer;
+        font-family: inherit;
+        color: #222;
+    }
+    .btn:hover { border-color: #444; background: #ececec; }
+    .btn:active { background: #ddd; }
+    .btn:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid #2a6df4; outline-offset: 1px; }
+    .t { display: block; font-size: 12px; font-weight: 600; }
+    .d { display: block; font-size: 11px; color: #777; margin-top: 1px; }
+    .row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+    .row label { flex: 0 0 auto; color: #555; }
+    input[type=number] { width: 52px; }
+    input[type=text], select { flex: 1; min-width: 0; }
+    input[type=text], input[type=number], select {
+        padding: 4px 6px; border: 1px solid #ccc; border-radius: 3px; font-family: inherit; font-size: 12px;
+    }
+    .chk { display: flex; gap: 6px; align-items: flex-start; margin: 0 0 6px; color: #444; }
+    .chk input { margin-top: 2px; }
+    nav {
+        position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 2px;
+        margin: -10px -12px 12px; padding: 6px 8px 0; background: #fff; border-bottom: 1px solid #ddd;
+    }
+    nav button {
+        border: 0; background: none; padding: 6px 8px; font: inherit; color: #555; cursor: pointer;
+        border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
+    nav button:hover { color: #111; }
+    nav button.on { color: #111; font-weight: 600; border-bottom-color: #2a6df4; }
+    nav button:focus-visible { outline: 2px solid #2a6df4; outline-offset: -2px; }
+    .tab { display: none; }
+    .tab.on { display: block; }
+    .hint { margin: 0 0 8px; color: #666; font-size: 11px; line-height: 1.4; }
+    #log {
+        margin-top: 8px; padding: 8px; background: #f2f2f2; border-radius: 3px;
+        font-family: Consolas, monospace; font-size: 11px; white-space: pre-wrap;
+        min-height: 18px; color: #555; word-break: break-word;
+    }
+</style>
+</head>
+<body>
+
+<nav id="nav" role="tablist">
+    <button role="tab" data-tab="page">Страница</button>
+    <button role="tab" data-tab="text">Текст</button>
+    <button role="tab" data-tab="lists">Списки</button>
+    <button role="tab" data-tab="tables">Таблицы</button>
+    <button role="tab" data-tab="more">Ещё</button>
+</nav>
+
+<section class="tab" id="tab-page">
+<h3>Стили страницы</h3>
+<p class="hint">Выделите нужные абзацы (или просто поставьте курсор на страницу) и нажмите стиль: плагин сам выделит их в отдельный раздел, вручную разрывы ставить не нужно. Титульная работает только на первой странице. Выделение начинайте и заканчивайте вне таблиц.</p>
+<button class="btn" onclick="run('secTitle')">
+    <span class="t">ГОСТ_Титульная</span>
+    <span class="d">Текущая страница: А4 книжная, без номера (в нумерации учитывается)</span>
+</button>
+<button class="btn" onclick="run('secPortrait')">
+    <span class="t">ГОСТ_Книжная</span>
+    <span class="d">Текущая страница: А4, поля слева 30, сверху 20, снизу 20, справа 10 мм, номер внизу</span>
+</button>
+<button class="btn" onclick="run('secLandscape')">
+    <span class="t">ГОСТ_Альбомная</span>
+    <span class="d">Текущая страница: книжная, повёрнутая на 90°, 30 мм сверху под переплёт, номер внизу</span>
+</button>
+</section>
+
+<section class="tab" id="tab-text">
+<h3>Текст</h3>
+<button class="btn" onclick="run('body')">
+    <span class="t">Основной текст</span>
+    <span class="d">Times New Roman 14, интервал 1,5, отступ 1,25 см, по ширине</span>
+</button>
+<button class="btn" onclick="run('code')">
+    <span class="t">Листинг кода</span>
+    <span class="d">Courier New 12, одинарный интервал, без отступа, по левому краю</span>
+</button>
+<button class="btn" onclick="run('clean')">
+    <span class="t">Убрать запрещённое форматирование</span>
+    <span class="d">Подчёркивание, зачёркивание, цвет текста, выделение маркером</span>
+</button>
+
+<h3>Заголовки</h3>
+<button class="btn" onclick="run('h1c')">
+    <span class="t">Глава (за ней идёт параграф)</span>
+    <span class="d">Жирный, по центру, с новой страницы; две строки до параграфа даёт сам параграф</span>
+</button>
+<button class="btn" onclick="run('h1')">
+    <span class="t">Введение, заключение, источники, глава без параграфов</span>
+    <span class="d">Жирный, по центру, с новой страницы, после заголовка две строки</span>
+</button>
+<button class="btn" onclick="run('h2')">
+    <span class="t">Параграф (1.1)</span>
+    <span class="d">Жирный, красная строка 1,25 см</span>
+</button>
+<button class="btn" onclick="run('h3')">
+    <span class="t">Пункт (1.1.1)</span>
+    <span class="d">Обычный, красная строка 1,25 см</span>
+</button>
+
+</section>
+
+<section class="tab" id="tab-lists">
+<h3>Перечисления</h3>
+<label class="chk">
+    <input type="checkbox" id="fixPunct" checked>
+    <span>Поправить знаки: «;» в конце элементов, «.» в конце последнего, строчная первая буква</span>
+</label>
+<button class="btn" onclick="run('listDash')">
+    <span class="t">Список с тире</span>
+    <span class="d">– первый элемент; – второй элемент.</span>
+</button>
+<button class="btn" onclick="run('listLetter')">
+    <span class="t">Список с буквами</span>
+    <span class="d">а), б), в)… без ё, з, й, о, ч, ъ, ы, ь</span>
+</button>
+<button class="btn" onclick="run('listNum')">
+    <span class="t">Вложенный список с цифрами</span>
+    <span class="d">1), 2)… со сдвигом на один абзацный отступ</span>
+</button>
+
+</section>
+
+<section class="tab" id="tab-tables">
+<h3>Таблицы</h3>
+<div class="row">
+    <label for="tCols">Столбцов</label><input type="number" id="tCols" value="3" min="1" max="20">
+    <label for="tRows">Строк</label><input type="number" id="tRows" value="3" min="1" max="60">
+</div>
+<div class="row">
+    <label for="tName">Название</label><input type="text" id="tName" placeholder="Наименование таблицы">
+</div>
+<button class="btn" onclick="runTable()">
+    <span class="t">Вставить таблицу с подписью</span>
+    <span class="d">Подпись слева над таблицей: Таблица N – Название</span>
+</button>
+
+<h3>Рисунки</h3>
+<div class="row">
+    <label for="fName">Название</label><input type="text" id="fName" placeholder="Наименование рисунка">
+</div>
+<button class="btn" onclick="runFigure()">
+    <span class="t">Вставить место и подпись рисунка</span>
+    <span class="d">Пустой абзац по центру для картинки и подпись под ним</span>
+</button>
+<button class="btn" onclick="run('figAlign')">
+    <span class="t">Выровнять выделенное как рисунок</span>
+    <span class="d">По центру, без отступа, не отрывать от подписи</span>
+</button>
+
+</section>
+
+<section class="tab" id="tab-more">
+<h3>Приложения</h3>
+<div class="row">
+    <label for="aType">Тип</label>
+    <select id="aType">
+        <option>обязательное</option>
+        <option>рекомендуемое</option>
+        <option>справочное</option>
+    </select>
+</div>
+<button class="btn" onclick="runAppendix()">
+    <span class="t">Вставить заголовок приложения</span>
+    <span class="d">Новая страница, буква по порядку, тип и название</span>
+</button>
+
+<h3>Служебное</h3>
+<button class="btn" onclick="run('renumber')">
+    <span class="t">Пересчитать номера подписей</span>
+    <span class="d">Рисунок N и Таблица N по порядку в документе</span>
+</button>
+<button class="btn" onclick="run('resetNormal')">
+    <span class="t">Сбросить базовый стиль Normal</span>
+    <span class="d">Times 14, без отступов, одинарный интервал</span>
+</button>
+
+</section>
+
+<h3>Лог</h3>
+<pre id="log">готово к работе</pre>
+
+<script>
+    window.Asc.plugin.init = function () {};
+
+    /* Настройки оформления. Единицы: интервалы и отступы в twips (1 см = 567),
+       размер шрифта в половинках пункта (28 = 14 пт). */
+    var CFG = {
+        font: "Times New Roman",
+        size: 28,            // 14 пт
+        line: 360,           // интервал 1,5
+        indent: 709,         // абзацный отступ 1,25 см
+        gap: 480,            // расстояние от заголовка до текста, около двух строк
+        gapSmall: 240,       // небольшой отступ у рисунков и подписей
+        h2jc: "left",        // "left" с отступом или "center" для параграфов
+        tableSize: 24,       // 12 пт в таблицах
+        codeFont: "Courier New",
+        codeSize: 24,        // 12 пт в листингах
+        dash: "–",
+        // Поля книжной страницы в twips (1 мм = 56,7): слева 30, сверху 20, справа 10, снизу 20 мм.
+        portrait: { left: 1701, top: 1134, right: 567, bottom: 1134 },
+        // Альбомная страница это книжная, повёрнутая на 90°. "cw" по часовой стрелке:
+        // левое поле 30 мм становится верхним (под переплёт), "ccw" против часовой: нижним.
+        landRot: "cw",
+        // Расстояние номера страницы от нижнего края листа, twips
+        footerDistPort: 567,   // 10 мм
+        footerDistLand: 425    // 7,5 мм: у альбомной нижнее поле 15 мм
+    };
+
+    function setLog(msg) {
+        var el = document.getElementById("log");
+        msg = String(msg === undefined ? "нет ответа от редактора" : msg);
+        el.textContent = msg;
+        if (msg.indexOf("ok") === 0) el.style.color = "#1b7a1b";
+        else if (msg.indexOf("ОШИБКА") === 0) el.style.color = "#c00000";
+        else el.style.color = "#b36200";
+    }
+
+    function run(action, opt) {
+        Asc.scope.cfg = CFG;
+        Asc.scope.action = action;
+        Asc.scope.opt = opt || {};
+        window.Asc.plugin.callCommand(gostMain, false, false, setLog);
+    }
+
+    function num(id, def, min, max) {
+        var v = parseInt(document.getElementById(id).value, 10);
+        if (isNaN(v)) v = def;
+        return Math.max(min, Math.min(max, v));
+    }
+
+    function runTable() {
+        run("table", {
+            cols: num("tCols", 3, 1, 20),
+            rows: num("tRows", 3, 1, 60),
+            name: document.getElementById("tName").value.trim()
+        });
+    }
+    function runFigure() {
+        run("figure", { name: document.getElementById("fName").value.trim() });
+    }
+    function runAppendix() {
+        run("appendix", { type: document.getElementById("aType").value });
+    }
+
+    // Список-кнопки читают флажок пунктуации
+    var _run = run;
+    run = function (action, opt) {
+        if (action === "listDash" || action === "listLetter" || action === "listNum") {
+            opt = { fix: document.getElementById("fixPunct").checked };
+        }
+        _run(action, opt);
+    };
+
+    function showTab(name) {
+        var tabs = document.querySelectorAll(".tab");
+        for (var i = 0; i < tabs.length; i++) tabs[i].className = "tab" + (tabs[i].id === "tab-" + name ? " on" : "");
+        var btns = document.querySelectorAll("#nav button");
+        for (var k = 0; k < btns.length; k++) btns[k].className = btns[k].getAttribute("data-tab") === name ? "on" : "";
+        try { sessionStorage.setItem("gostTab", name); } catch (e) {}
+    }
+    (function () {
+        var btns = document.querySelectorAll("#nav button");
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].addEventListener("click", function () { showTab(this.getAttribute("data-tab")); });
+        }
+        var start = "page";
+        try { start = sessionStorage.getItem("gostTab") || "page"; } catch (e) {}
+        showTab(start);
+    })();
+
+    /* Весь код ниже выполняется внутри редактора, поэтому он самодостаточен
+       и использует только Api и Asc.scope. Только ES5. */
+    function gostMain() {
+        try {
+            var doc = Api.GetDocument();
+            var C = Asc.scope.cfg;
+            var O = Asc.scope.opt || {};
+            var act = Asc.scope.action;
+            var warn = [];
+
+            function t(label, fn) {
+                try { return fn(); }
+                catch (e) {
+                    var m = label + " (" + (e && e.message ? e.message : e) + ")";
+                    if (warn.indexOf(m) < 0) warn.push(m);
+                }
+            }
+            function P(obj, method) {
+                var a = Array.prototype.slice.call(arguments, 2);
+                if (!obj || typeof obj[method] !== "function") {
+                    var m = "нет метода " + method;
+                    if (warn.indexOf(m) < 0) warn.push(m);
+                    return;
+                }
+                return t(method, function () { return obj[method].apply(obj, a); });
+            }
+            function done(msg) {
+                if (warn.length) return "Выполнено частично: " + (msg || "") + " | не сработало: " + warn.join("; ");
+                return "ok — " + (msg || "готово");
+            }
+
+            var SP = {
+                body:   { name: "ГОСТ Текст", jc: "both", first: C.indent, line: C.line, direct: true },
+                h1:     { name: "Heading 1", ru: "Заголовок 1", jc: "center", first: 0, line: C.line, pb: true, keepNext: true, bold: true, after: C.gap, direct: true, setBold: true },
+                h2: { name: "Heading 2", ru: "Заголовок 2", jc: C.h2jc, first: (C.h2jc === "center" ? 0 : C.indent), line: C.line, keepNext: true, bold: true, before: C.gap, after: C.gap, direct: true, setBold: true },
+                h3: { name: "Heading 3", ru: "Заголовок 3", jc: C.h2jc, first: (C.h2jc === "center" ? 0 : C.indent), line: C.line, keepNext: true, bold: false, before: C.gapSmall, after: C.gapSmall, direct: true, setBold: true },
+                list:   { name: "ГОСТ Список", jc: "both", first: C.indent, line: C.line },
+                list2:  { name: "ГОСТ Список 2", jc: "both", first: C.indent * 2, line: C.line },
+                fig:    { name: "ГОСТ Рисунок", jc: "center", first: 0, line: 240, keepNext: true, before: C.gapSmall },
+                figcap: { name: "ГОСТ Подпись рисунка", jc: "center", first: 0, line: C.line, after: C.gapSmall },
+                tabcap: { name: "ГОСТ Подпись таблицы", jc: "left", first: 0, line: C.line, keepNext: true, before: C.gapSmall },
+                tabtext:{ name: "ГОСТ Таблица", jc: "both", first: 0, line: 240, size: C.tableSize },
+                tabhead:{ name: "ГОСТ Таблица заголовок", jc: "center", first: 0, line: 240, size: C.tableSize },
+                code:   { name: "ГОСТ Листинг", jc: "left", first: 0, line: 240, font: C.codeFont, size: C.codeSize, direct: true },
+                app:    { name: "ГОСТ Приложение", jc: "center", first: 0, line: C.line, keepNext: true, bold: true },
+                pnum:   { name: "ГОСТ Номер страницы", jc: "center", first: 0, line: 240 }
+            };
+
+            function ensureStyle(sp) {
+                var st = doc.GetStyle(sp.name);
+                if (!st && sp.ru) st = doc.GetStyle(sp.ru);
+                if (!st) st = doc.CreateStyle(sp.name);
+                if (!st) { warn.push("не создан стиль " + sp.name); return null; }
+                var pp = st.GetParaPr();
+                var tp = st.GetTextPr();
+                P(pp, "SetJc", sp.jc);
+                P(pp, "SetIndFirstLine", sp.first);
+                P(pp, "SetIndLeft", 0);
+                P(pp, "SetIndRight", 0);
+                P(pp, "SetSpacingLine", sp.line, "auto");
+                P(pp, "SetSpacingBefore", sp.before || 0);
+                P(pp, "SetSpacingAfter", sp.after || 0);
+                P(pp, "SetPageBreakBefore", !!sp.pb);
+                P(pp, "SetKeepNext", !!sp.keepNext);
+                P(tp, "SetFontFamily", sp.font || C.font);
+                P(tp, "SetFontSize", sp.size || C.size);
+                P(tp, "SetColor", 0, 0, 0, false);
+                P(tp, "SetBold", !!sp.bold);
+                P(tp, "SetItalic", false);
+                P(tp, "SetUnderline", false);
+                return st;
+            }
+
+            function getSel() {
+                var r = doc.GetRangeBySelect();
+                return r || null;
+            }
+
+            function mkPara(text, st) {
+                var p = Api.CreateParagraph();
+                if (st) P(p, "SetStyle", st);
+                p.AddText(text);
+                return p;
+            }
+
+            function maxNum(re) {
+                var m = 0, n = doc.GetElementsCount();
+                for (var i = 0; i < n; i++) {
+                    var el = doc.GetElement(i);
+                    if (!el || el.GetClassType() !== "paragraph") continue;
+                    var mm = re.exec(el.GetText() || "");
+                    if (mm) m = Math.max(m, parseInt(mm[1], 10));
+                }
+                return m;
+            }
+
+            var LETTERS = "абвгдежиклмнпрстуфхцшщэюя";
+            function letterLabel(i) {
+                var n = LETTERS.length;
+                if (i < n) return LETTERS.charAt(i);
+                var j = i - n;
+                return LETTERS.charAt(Math.floor(j / n) % n) + LETTERS.charAt(j % n);
+            }
+
+            /* ---------- Стили, применяемые к выделению ---------- */
+            if (act === "body" || act === "h1" || act === "h1c" || act === "h2" || act === "h3" || act === "code") {
+                var sp = SP[act === "h1c" ? "h1" : act];
+                var st = ensureStyle(sp);
+                var r = getSel();
+                if (!r) return "ОШИБКА: ничего не выделено";
+                var ps = r.GetAllParagraphs();
+                var wasHeading = false;
+                for (var i = 0; i < ps.length; i++) {
+                    (function (pp) {
+                        t("прежний стиль абзаца", function () {
+                            var sn = String(pp.GetStyle().GetName() || "");
+                            if (/^(Heading|Заголовок)\s*\d/.test(sn)) wasHeading = true;
+                        });
+                    })(ps[i]);
+                    P(ps[i], "SetStyle", st);
+                    if (act === "h1" || act === "h1c") P(ps[i], "SetSpacingAfter", act === "h1c" ? 0 : C.gap);
+                }
+                if (sp.direct) {
+                    P(r, "SetFontFamily", sp.font || C.font);
+                    P(r, "SetFontSize", sp.size || C.size);
+                    P(r, "SetColor", 0, 0, 0, false);
+                    if (sp.setBold) P(r, "SetBold", !!sp.bold);
+                    else if (wasHeading) P(r, "SetBold", false);   // был заголовок: жирный от него не переносим
+                }
+                return done("абзацев: " + ps.length);
+            }
+
+            /* ---------- Рисунок: выровнять выделенное ---------- */
+            if (act === "figAlign") {
+                var stf = ensureStyle(SP.fig);
+                var rf = getSel();
+                if (!rf) return "ОШИБКА: выделите абзац с рисунком";
+                var pf = rf.GetAllParagraphs();
+                for (var a = 0; a < pf.length; a++) P(pf[a], "SetStyle", stf);
+                return done("абзацев: " + pf.length);
+            }
+
+            /* ---------- Перечисления ---------- */
+            if (act === "listDash" || act === "listLetter" || act === "listNum") {
+                var sl = ensureStyle(act === "listNum" ? SP.list2 : SP.list);
+                var rl = getSel();
+                if (!rl) return "ОШИБКА: выделите абзацы будущего списка";
+                var pl = rl.GetAllParagraphs();
+                var items = [];
+                for (var k = 0; k < pl.length; k++) {
+                    var tx = String(pl[k].GetText() || "").replace(/[\r\n]+/g, " ");
+                    if (tx.replace(/\s+/g, "") === "") continue;
+                    items.push({ p: pl[k], tx: tx });
+                }
+                if (!items.length) return "ОШИБКА: в выделении нет текста";
+                for (var q = 0; q < items.length; q++) {
+                    var s = items[q].tx.replace(/^\s*(?:[–—\-]\s+|[а-яё]{1,2}\)\s*|\d{1,2}\)\s*)/, "");
+                    if (O.fix) {
+                        s = s.replace(/[\s;.,:]+$/, "");
+                        if (/^[А-ЯЁA-Z][а-яёa-z]/.test(s)) s = s.charAt(0).toLowerCase() + s.slice(1);
+                        s += (q === items.length - 1) ? "." : ";";
+                    }
+                    var prefix = act === "listDash" ? (C.dash + " ")
+                               : act === "listLetter" ? (letterLabel(q) + ") ")
+                               : ((q + 1) + ") ");
+                    items[q].p.RemoveAllElements();
+                    items[q].p.AddText(prefix + s);
+                    P(items[q].p, "SetStyle", sl);
+                }
+                return done("элементов: " + items.length);
+            }
+
+            /* ---------- Таблица с подписью ---------- */
+            if (act === "table") {
+                var cols = O.cols || 3, rows = O.rows || 3;
+                var stCap = ensureStyle(SP.tabcap);
+                var stTxt = ensureStyle(SP.tabtext);
+                var stHead = ensureStyle(SP.tabhead);
+                var nT = (t("подсчёт таблиц", function () { return maxNum(/^Таблица\s+(\d+)\s*[–—-]/); }) || 0) + 1;
+                var cap = mkPara("Таблица " + nT + " – " + (O.name || "Наименование таблицы"), stCap);
+
+                var table = Api.CreateTable(cols, rows);
+                P(table, "SetWidth", "percent", 100);
+                var types = ["Top", "Bottom", "Left", "Right", "InsideH", "InsideV"];
+                for (var b = 0; b < types.length; b++) {
+                    P(table, "SetTableBorder" + types[b], "single", 4, 0, 0, 0, 0);
+                }
+                for (var ri = 0; ri < rows; ri++) {
+                    var row = table.GetRow(ri);
+                    for (var ci = 0; ci < cols; ci++) {
+                        t("ячейка", function () {
+                            var cell = row.GetCell(ci);
+                            var cc = cell.GetContent();
+                            var cp = cc.GetElement(0);
+                            if (!cp) { cp = Api.CreateParagraph(); cc.Push(cp); }
+                            cp.SetStyle(ri === 0 ? stHead : stTxt);
+                            P(cell, "SetVerticalAlign", "center");
+                        });
+                    }
+                }
+                t("повтор шапки", function () { table.GetRow(0).SetTableHeader(true); });
+                doc.InsertContent([cap, table, Api.CreateParagraph()]);
+                return done("Таблица " + nT + ", " + cols + "×" + rows);
+            }
+
+            /* ---------- Рисунок: место и подпись ---------- */
+            if (act === "figure") {
+                var stFig = ensureStyle(SP.fig);
+                var stFc = ensureStyle(SP.figcap);
+                var nF = (t("подсчёт рисунков", function () { return maxNum(/^Рисунок\s+(\d+)\s*[–—-]/); }) || 0) + 1;
+                var holder = Api.CreateParagraph();
+                P(holder, "SetStyle", stFig);
+                var fc = mkPara("Рисунок " + nF + " – " + (O.name || "Наименование рисунка"), stFc);
+                doc.InsertContent([holder, fc]);
+                return done("Рисунок " + nF + ": поставьте курсор в пустой абзац над подписью и вставьте картинку");
+            }
+
+            /* ---------- Приложение ---------- */
+            if (act === "appendix") {
+                var ALPHA = "АБВГДЕЖИКЛМНПРСТУФХЦШЩЭЮЯ";
+                var last = -1;
+                var cnt = doc.GetElementsCount();
+                for (var e = 0; e < cnt; e++) {
+                    var el = doc.GetElement(e);
+                    if (!el || el.GetClassType() !== "paragraph") continue;
+                    var mm = /^Приложение\s+([А-ЯЁ])\s*$/.exec(el.GetText() || "");
+                    if (mm) last = Math.max(last, ALPHA.indexOf(mm[1]));
+                }
+                if (last + 1 >= ALPHA.length) return "ОШИБКА: закончились буквы для приложений";
+                var letter = ALPHA.charAt(last + 1);
+                var stA = ensureStyle(SP.app);
+                var a1 = mkPara("Приложение " + letter, stA);
+                P(a1, "SetPageBreakBefore", true);
+                var a2 = mkPara("(" + (O.type || "обязательное") + ")", stA);
+                var a3 = mkPara("Заголовок приложения", stA);
+                doc.InsertContent([a1, a2, a3]);
+                return done("Приложение " + letter);
+            }
+
+            /* ---------- Стили страницы: каждая кнопка применяется к текущей странице ---------- */
+            if (act === "secTitle" || act === "secPortrait" || act === "secLandscape") {
+                var PM = C.portrait;
+                var stNum = ensureStyle(SP.pnum);
+                var names = { secTitle: "ГОСТ_Титульная", secPortrait: "ГОСТ_Книжная", secLandscape: "ГОСТ_Альбомная" };
+
+                var need = ["GetSections", "GetPageCount", "GetCurrentPage", "GoToPage", "GetCurrentParagraph", "GetRangeBySelect"];
+                var missing = [];
+                for (var mi = 0; mi < need.length; mi++) if (typeof doc[need[mi]] !== "function") missing.push(need[mi]);
+                if (missing.length) return "ОШИБКА: в этой версии редактора нет методов: " + missing.join(", ") + ". Пришлите этот текст";
+
+                var secOf = function (p) { try { return p.GetSection(); } catch (e) { return null; } };
+                var inTable = function (p) { try { return !!p.GetParentTable(); } catch (e) { return false; } };
+                var near = function (x, y) { return Math.abs(x - y) <= 6; };
+
+                var setFooter = function (sec, withNumber) {
+                    t("колонтитул", function () {
+                        var f = sec.GetFooter("default", true);
+                        var fp = f.GetElement(0);
+                        fp.RemoveAllElements();
+                        if (stNum) fp.SetStyle(stNum);
+                        fp.SetJc("center");
+                        if (withNumber) {
+                            var pn = fp.AddPageNumber();
+                            if (pn) {
+                                P(pn, "SetColor", 0, 0, 0, false);
+                                P(pn, "SetFontFamily", C.font);
+                                P(pn, "SetFontSize", C.size);
+                                P(pn, "SetBold", false);
+                            }
+                        }
+                        P(fp, "SetColor", 0, 0, 0, false);
+                        P(fp, "SetFontSize", C.size);
+                        P(fp, "SetBold", false);
+                    });
+                };
+                var emptyTitleFooter = function (sec) {
+                    t("пустой колонтитул титульной", function () {
+                        sec.GetFooter("title", true).GetElement(0).RemoveAllElements();
+                    });
+                };
+                var applyKind = function (sec, kind) {
+                    if (kind === "secLandscape") {
+                        var rot = C.landRot === "ccw"
+                            ? { top: PM.right, right: PM.bottom, bottom: PM.left, left: PM.top }
+                            : { top: PM.left, right: PM.top, bottom: PM.right, left: PM.bottom };
+                        P(sec, "SetPageSize", 16838, 11906, false);
+                        P(sec, "SetPageMargins", rot.left, rot.top, rot.right, rot.bottom);
+                        P(sec, "SetFooterDistance", C.footerDistLand);
+                    } else {
+                        P(sec, "SetPageSize", 11906, 16838, true);
+                        P(sec, "SetPageMargins", PM.left, PM.top, PM.right, PM.bottom);
+                        P(sec, "SetFooterDistance", C.footerDistPort);
+                    }
+                    P(sec, "SetTitlePage", false);
+                    setFooter(sec, kind !== "secTitle");
+                };
+
+                t("точка истории", function () { doc.CreateNewHistoryPoint(); });
+
+                if (act === "secTitle" && doc.GetCurrentPage() !== 0) {
+                    return "ОШИБКА: ГОСТ_Титульная применяется только к первой странице документа. Поставьте курсор на неё";
+                }
+
+                /* Титульная на первой странице: отдельный колонтитул первой страницы, разделы не нужны */
+                if (act === "secTitle") {
+                    var secsT = (typeof doc.GetSections === "function") ? doc.GetSections() : [];
+                    var s1 = secsT.length ? secsT[0] : doc.GetFinalSection();
+                    applyKind(s1, "secPortrait");
+                    P(s1, "SetTitlePage", true);
+                    emptyTitleFooter(s1);
+                    return done("ГОСТ_Титульная: на первой странице номера нет, нумерация остальных сквозная");
+                }
+
+                if (typeof doc.GetSections !== "function" || typeof doc.GetPageCount !== "function") {
+                    return "ОШИБКА: эта версия редактора не умеет работать с разделами и страницами через плагины";
+                }
+
+                /* Границы: выделенные абзацы, а если выделения нет, то текущая страница */
+                var firstP = null, lastP = null, bySel = false;
+                var total = doc.GetPageCount();
+                var cur = doc.GetCurrentPage();
+                var pageNo = cur + 1;
+
+                var rng = null, selText = "";
+                try { rng = doc.GetRangeBySelect(); } catch (e8) { rng = null; }
+                if (rng) { try { selText = String(rng.GetText() || ""); } catch (e9) { selText = ""; } }
+                if (rng && selText.replace(/\s+/g, "") !== "") {
+                    var sps = rng.GetAllParagraphs();
+                    if (sps && sps.length) { firstP = sps[0]; lastP = sps[sps.length - 1]; bySel = true; }
+                    if (bySel && (inTable(firstP) || inTable(lastP))) {
+                        return "ОШИБКА: выделение начинается или заканчивается внутри таблицы. Выделите абзацы до таблицы и после неё";
+                    }
+                }
+
+                if (act === "secPortrait" && !bySel && cur === 0) {
+                    // Книжная на первой странице: обычная страница с номером, флаг титульной снимается
+                    var secs0 = doc.GetSections();
+                    var f0 = secs0.length ? secs0[0] : doc.GetFinalSection();
+                    applyKind(f0, "secPortrait");
+                    return done("ГОСТ_Книжная: первая страница книжная, номер на ней показан");
+                }
+
+                if (!bySel) {
+                    doc.GoToPage(cur);
+                    firstP = doc.GetCurrentParagraph();
+                    if (!firstP) return "ОШИБКА: не нашла абзац в начале страницы " + pageNo;
+                    if (inTable(firstP)) return "ОШИБКА: страница " + pageNo + " начинается внутри таблицы. Выделите нужные абзацы и нажмите кнопку ещё раз";
+
+                    if (cur + 1 < total) {
+                        doc.GoToPage(cur + 1);
+                        var nf = doc.GetCurrentParagraph();
+                        doc.GoToPage(cur);
+                        if (!nf) return "ОШИБКА: не нашла абзац в начале страницы " + (pageNo + 1);
+                        if (inTable(nf)) return "ОШИБКА: на страницу " + (pageNo + 1) + " переходит таблица. Выделите нужные абзацы и нажмите кнопку ещё раз";
+                        var sameP = false;
+                        try { sameP = nf.Paragraph === firstP.Paragraph; } catch (e2) { sameP = false; }
+                        if (sameP) return "ОШИБКА: страница " + pageNo + " целиком занята одним абзацем, который идёт дальше. Выделите нужные абзацы и нажмите кнопку ещё раз";
+                        lastP = nf.GetPrevious();
+                        if (!lastP) return "ОШИБКА: не удалось определить последний абзац страницы " + pageNo + ". Выделите нужные абзацы и нажмите кнопку ещё раз";
+                    } else {
+                        doc.GoToPage(cur);
+                    }
+                }
+
+                /* Номер раздела по абзацу: временно ставим уникальное расстояние до колонтитула и ищем его среди разделов */
+                var TAG = 331;
+                t("подбор метки", function () {
+                    var cands = [331, 353, 377, 401], lst = doc.GetSections();
+                    for (var c = 0; c < cands.length; c++) {
+                        var free = true;
+                        for (var k = 0; k < lst.length; k++) if (near(lst[k].GetFooterDistance(), cands[c])) free = false;
+                        if (free) { TAG = cands[c]; return; }
+                    }
+                });
+                var secIndex = function (sec) {
+                    if (!sec) return -1;
+                    var old = sec.GetFooterDistance();
+                    if (typeof old !== "number" || isNaN(old)) return -1;
+                    var idx = -1;
+                    sec.SetFooterDistance(TAG);
+                    try {
+                        var list = doc.GetSections();
+                        for (var i = 0; i < list.length; i++) {
+                            if (near(list[i].GetFooterDistance(), TAG)) { idx = i; break; }
+                        }
+                    } finally {
+                        sec.SetFooterDistance(old);
+                    }
+                    return idx;
+                };
+
+                var origSec = secOf(firstP);
+                if (!origSec) return "ОШИБКА: не удалось получить раздел страницы " + pageNo;
+                var secCount = doc.GetSections().length;
+                var idxFirst = -1;
+                try { idxFirst = secIndex(origSec); } catch (e5) { idxFirst = -1; }
+                if (idxFirst < 0) return "ОШИБКА: не удалось определить номер раздела (разделов в документе: " + secCount + "). Пришлите этот текст";
+
+                if (lastP) {
+                    var idxLast = -1;
+                    try { idxLast = secIndex(secOf(lastP)); } catch (e10) { idxLast = -1; }
+                    if (idxLast !== idxFirst) return "ОШИБКА: выделенное захватывает несколько разделов (" + idxFirst + " и " + idxLast + "). Выделите абзацы одного раздела";
+                }
+
+                var prevP = firstP.GetPrevious();
+                var nextP = lastP ? lastP.GetNext() : null;
+                var idxPrev = -1, idxNext = -1;
+                try { if (prevP) idxPrev = secIndex(secOf(prevP)); } catch (e6) { idxPrev = -1; }
+                try { if (nextP) idxNext = secIndex(secOf(nextP)); } catch (e7) { idxNext = -1; }
+                var needStart = !!prevP && idxPrev === idxFirst;
+                var needEnd = !!lastP && !!nextP && idxNext === idxFirst;
+
+                /* Свойства исходного раздела читаем до разделения */
+                var W = 11906, H = 16838, mL = PM.left, mT = PM.top, mR = PM.right, mB = PM.bottom, fd = C.footerDistPort;
+                t("свойства раздела", function () {
+                    W = origSec.GetPageWidth(); H = origSec.GetPageHeight();
+                    mL = origSec.GetPageMarginLeft(); mT = origSec.GetPageMarginTop();
+                    mR = origSec.GetPageMarginRight(); mB = origSec.GetPageMarginBottom();
+                    fd = origSec.GetFooterDistance();
+                });
+                var origTitle = false;
+                t("колонтитул титульной", function () { origTitle = !!origSec.GetFooter("title", false); });
+
+                if (act === "secPortrait" && W < H && near(mL, PM.left) && near(mT, PM.top) && near(mR, PM.right) && near(mB, PM.bottom) && !needStart && !needEnd) {
+                    return done("страница " + pageNo + " уже книжная по ГОСТ, менять нечего");
+                }
+
+                /* Разделяем: до страницы (A), сама страница (B), после страницы остаётся исходный раздел */
+                var secA = null, target = origSec;
+                if (needStart) secA = doc.CreateSection(prevP);
+                if (needEnd) target = doc.CreateSection(lastP);
+
+                if (secA) {
+                    // новый раздел до страницы должен выглядеть как исходный
+                    P(secA, "SetPageSize", W, H, W < H);
+                    P(secA, "SetPageMargins", mL, mT, mR, mB);
+                    P(secA, "SetFooterDistance", fd);
+                    setFooter(secA, true);
+                    if (origTitle && idxFirst === 0) {
+                        P(secA, "SetTitlePage", true);
+                        emptyTitleFooter(secA);
+                    } else {
+                        P(secA, "SetTitlePage", false);
+                    }
+                }
+                if (origTitle && idxFirst === 0 && (needStart || needEnd)) P(origSec, "SetTitlePage", false);
+
+                applyKind(target, act);
+
+                t("уборка меток", function () {
+                    var lst2 = doc.GetSections();
+                    for (var q2 = 0; q2 < lst2.length; q2++) {
+                        if (near(lst2[q2].GetFooterDistance(), TAG)) lst2[q2].SetFooterDistance(C.footerDistPort);
+                    }
+                });
+                if (!bySel) t("вернуть курсор", function () { doc.GoToPage(cur); });
+                var info = names[act] + (bySel ? " применён к выделенным абзацам" : " применён к странице " + pageNo);
+                if (needStart || needEnd) info += " (выделено в отдельный раздел)";
+                info += " [страниц: " + total + ", разделов: " + secCount + " → " + doc.GetSections().length +
+                        ", раздел страницы: " + idxFirst + ", разрыв до: " + needStart + ", после: " + needEnd + "]";
+                return done(info);
+            }
+
+            /* ---------- Убрать запрещённое форматирование ---------- */
+            if (act === "clean") {
+                var rc = getSel();
+                if (!rc) return "ОШИБКА: ничего не выделено";
+                P(rc, "SetUnderline", false);
+                P(rc, "SetStrikeout", false);
+                P(rc, "SetDoubleStrikeout", false);
+                P(rc, "SetColor", 0, 0, 0, false);
+                P(rc, "SetHighlight", "none");
+                P(rc, "SetShd", "nil", 0, 0, 0);   // заливка фона текста
+                P(rc, "SetSpacing", 0);            // разреженный/уплотнённый шрифт
+                P(rc, "SetPosition", 0);           // смещение вверх/вниз
+                return done("подчёркивание, зачёркивание, цвет, маркер, заливка, интервал и смещение сброшены");
+            }
+
+            /* ---------- Пересчёт номеров подписей ---------- */
+            if (act === "renumber") {
+                var nf = 0, nt = 0, changed = 0;
+                var total = doc.GetElementsCount();
+                for (var x = 0; x < total; x++) {
+                    var pe = doc.GetElement(x);
+                    if (!pe || pe.GetClassType() !== "paragraph") continue;
+                    var txt = String(pe.GetText() || "");
+                    var mf = /^Рисунок\s+(\d+)(\s*[–—-].*)$/.exec(txt);
+                    var mt = /^Таблица\s+(\d+)(\s*[–—-].*)$/.exec(txt);
+                    var word = null, n = 0, rest = "", old = 0;
+                    if (mf) { word = "Рисунок"; n = ++nf; rest = mf[2]; old = parseInt(mf[1], 10); }
+                    else if (mt) { word = "Таблица"; n = ++nt; rest = mt[2]; old = parseInt(mt[1], 10); }
+                    if (word && old !== n) {
+                        pe.RemoveAllElements();
+                        pe.AddText(word + " " + n + rest);
+                        changed++;
+                    }
+                }
+                return done("рисунков: " + nf + ", таблиц: " + nt + ", изменено подписей: " + changed + ". Ссылки в тексте проверьте вручную");
+            }
+
+            /* ---------- Сброс Normal ---------- */
+            if (act === "resetNormal") {
+                var sn = doc.GetStyle("Normal") || doc.GetStyle("Обычный");
+                if (!sn) return "ОШИБКА: стиль Normal не найден";
+                var np = sn.GetParaPr(), nx = sn.GetTextPr();
+                P(np, "SetJc", "left");
+                P(np, "SetIndFirstLine", 0);
+                P(np, "SetIndLeft", 0);
+                P(np, "SetSpacingLine", 240, "auto");
+                P(np, "SetSpacingBefore", 0);
+                P(np, "SetSpacingAfter", 0);
+                P(nx, "SetFontFamily", C.font);
+                P(nx, "SetFontSize", C.size);
+                return done("Normal сброшен");
+            }
+
+            return "ОШИБКА: неизвестное действие " + act;
+        } catch (err) {
+            return "ОШИБКА: " + (err && err.message ? err.message : err);
+        }
+    }
+</script>
+</body>
+</html>
