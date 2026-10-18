@@ -141,15 +141,15 @@
 </label>
 <button class="btn" onclick="run('listDash')">
     <span class="t">Список с тире</span>
-    <span class="d">– первый элемент; – второй элемент.</span>
+    <span class="d">Настоящий список: – первый; – второй. Enter продолжает, Backspace на пустом пункте выходит</span>
 </button>
 <button class="btn" onclick="run('listLetter')">
     <span class="t">Список с буквами</span>
     <span class="d">а), б), в)… без ё, з, й, о, ч, ъ, ы, ь</span>
 </button>
 <button class="btn" onclick="run('listNum')">
-    <span class="t">Вложенный список с цифрами</span>
-    <span class="d">1), 2)… со сдвигом на один абзацный отступ</span>
+    <span class="t">Нумерованный список (1, 1.1)</span>
+    <span class="d">Настоящий список; Tab переводит пункт на уровень 1.1, Shift+Tab возвращает</span>
 </button>
 
 </section>
@@ -230,6 +230,7 @@
         codeFont: "Courier New",
         codeSize: 24,        // 12 пт в листингах
         dash: "–",
+        numFmt: ["%1", "%1.%2"],   // формат уровней нумерованного списка: %1 — номер 1-го уровня, %2 — 2-го
         // Поля книжной страницы в twips (1 мм = 56,7): слева 30, сверху 20, справа 10, снизу 20 мм.
         portrait: { left: 1701, top: 1134, right: 567, bottom: 1134 },
         // Альбомная страница это книжная, повёрнутая на 90°. "cw" по часовой стрелке:
@@ -444,9 +445,8 @@
                 return done("абзацев: " + pf.length);
             }
 
-            /* ---------- Перечисления ---------- */
-            if (act === "listDash" || act === "listLetter" || act === "listNum") {
-                var sl = ensureStyle(act === "listNum" ? SP.list2 : SP.list);
+            /* ---------- Перечисления: тире и цифры — настоящие списки, буквы — текстом ---------- */
+            if (act === "listDash" || act === "listNum" || act === "listLetter") {
                 var rl = getSel();
                 if (!rl) return "ОШИБКА: выделите абзацы будущего списка";
                 var pl = rl.GetAllParagraphs();
@@ -457,21 +457,63 @@
                     items.push({ p: pl[k], tx: tx });
                 }
                 if (!items.length) return "ОШИБКА: в выделении нет текста";
-                for (var q = 0; q < items.length; q++) {
-                    var s = items[q].tx.replace(/^\s*(?:[–—\-]\s+|[а-яё]{1,2}\)\s*|\d{1,2}\)\s*)/, "");
-                    if (O.fix) {
-                        s = s.replace(/[\s;.,:]+$/, "");
-                        if (/^[А-ЯЁA-Z][а-яёa-z]/.test(s)) s = s.charAt(0).toLowerCase() + s.slice(1);
-                        s += (q === items.length - 1) ? "." : ";";
+                var sl = ensureStyle(SP.list);
+
+                var fixText = function (s, q) {
+                    s = s.replace(/[\s;.,:]+$/, "");
+                    if (/^[А-ЯЁA-Z][а-яёa-z]/.test(s)) s = s.charAt(0).toLowerCase() + s.slice(1);
+                    return s + ((q === items.length - 1) ? "." : ";");
+                };
+
+                if (act === "listLetter") {
+                    for (var q = 0; q < items.length; q++) {
+                        var s = items[q].tx.replace(/^\s*(?:[–—\-]\s+|[а-яё]{1,2}\)\s*|\d{1,2}\)\s*)/, "");
+                        if (O.fix) s = fixText(s, q);
+                        items[q].p.RemoveAllElements();
+                        items[q].p.AddText(letterLabel(q) + ") " + s);
+                        P(items[q].p, "SetStyle", sl);
                     }
-                    var prefix = act === "listDash" ? (C.dash + " ")
-                               : act === "listLetter" ? (letterLabel(q) + ") ")
-                               : ((q + 1) + ") ");
-                    items[q].p.RemoveAllElements();
-                    items[q].p.AddText(prefix + s);
-                    P(items[q].p, "SetStyle", sl);
+                    return done("элементов: " + items.length);
                 }
-                return done("элементов: " + items.length);
+
+                /* Настоящий список: одно определение нумерации на всю кнопку */
+                var numb = doc.CreateNumbering(act === "listDash" ? "bullet" : "numbered");
+                if (!numb) return "ОШИБКА: не удалось создать список";
+                var levels = [];
+                for (var lv = 0; lv < 2; lv++) {
+                    var L = numb.GetLevel(lv);
+                    if (act === "listDash") P(L, "SetCustomType", "bullet", C.dash, "left");
+                    else P(L, "SetCustomType", "decimal", C.numFmt[lv], "left");
+                    P(L, "SetSuff", "space");
+                    (function (L, lv) {
+                        t("отступы уровня", function () {
+                            var lpp = L.GetParaPr();
+                            lpp.SetIndLeft(0);
+                            lpp.SetIndFirstLine(C.indent * (lv + 1));   // 2-й уровень сдвинут на абзацный отступ
+                        });
+                        t("шрифт номера", function () {
+                            var ltp = L.GetTextPr();
+                            ltp.SetFontFamily(C.font);
+                            ltp.SetFontSize(C.size);
+                            ltp.SetBold(false);
+                            ltp.SetColor(0, 0, 0, false);
+                        });
+                    })(L, lv);
+                    levels.push(L);
+                }
+
+                for (var q2 = 0; q2 < items.length; q2++) {
+                    var s2 = items[q2].tx.replace(/^\s*(?:[–—\-]\s+|\d{1,2}(?:\.\d{1,2})*[.)]\s*)/, "");
+                    var rewrite = (s2 !== items[q2].tx);
+                    if (O.fix) { s2 = fixText(s2, q2); rewrite = true; }
+                    if (rewrite) {
+                        items[q2].p.RemoveAllElements();
+                        items[q2].p.AddText(s2);
+                    }
+                    P(items[q2].p, "SetStyle", sl);
+                    P(items[q2].p, "SetNumbering", levels[0]);
+                }
+                return done("элементов: " + items.length + " (Enter продолжает список, Tab делает уровень)");
             }
 
             /* ---------- Таблица с подписью ---------- */
