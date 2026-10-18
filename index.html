@@ -476,7 +476,9 @@
                     return done("элементов: " + items.length);
                 }
 
-                /* Настоящий список: одно определение нумерации на всю кнопку */
+                /* Настоящий список. Абзацам даём обычный стиль, а всё оформление лежит в уровне нумерации:
+                   тогда Enter в конце пункта создаёт новый пункт, а не абзац другого стиля */
+                var nrm = doc.GetStyle("Normal") || doc.GetStyle("Обычный");
                 var numb = doc.CreateNumbering(act === "listDash" ? "bullet" : "numbered");
                 if (!numb) return "ОШИБКА: не удалось создать список";
                 var levels = [];
@@ -485,11 +487,15 @@
                     if (act === "listDash") P(L, "SetCustomType", "bullet", C.dash, "left");
                     else P(L, "SetCustomType", "decimal", C.numFmt[lv], "left");
                     P(L, "SetSuff", "space");
-                    (function (L, lv) {
-                        t("отступы уровня", function () {
+                    (function (L) {
+                        t("оформление уровня", function () {
                             var lpp = L.GetParaPr();
                             lpp.SetIndLeft(0);
-                            lpp.SetIndFirstLine(C.indent * (lv + 1));   // 2-й уровень сдвинут на абзацный отступ
+                            lpp.SetIndFirstLine(C.indent);
+                            lpp.SetJc("both");
+                            lpp.SetSpacingLine(C.line, "auto");
+                            lpp.SetSpacingBefore(0);
+                            lpp.SetSpacingAfter(0);
                         });
                         t("шрифт номера", function () {
                             var ltp = L.GetTextPr();
@@ -498,20 +504,34 @@
                             ltp.SetBold(false);
                             ltp.SetColor(0, 0, 0, false);
                         });
-                    })(L, lv);
+                    })(L);
                     levels.push(L);
                 }
 
                 for (var q2 = 0; q2 < items.length; q2++) {
-                    var s2 = items[q2].tx.replace(/^\s*(?:[–—\-]\s+|\d{1,2}(?:\.\d{1,2})*[.)]\s*)/, "");
-                    var rewrite = (s2 !== items[q2].tx);
-                    if (O.fix) { s2 = fixText(s2, q2); rewrite = true; }
-                    if (rewrite) {
-                        items[q2].p.RemoveAllElements();
-                        items[q2].p.AddText(s2);
-                    }
-                    P(items[q2].p, "SetStyle", sl);
-                    P(items[q2].p, "SetNumbering", levels[0]);
+                    (function (it, idx) {
+                        var s2 = it.tx.replace(/^\s*(?:[–—\-]\s+|\d{1,2}(?:\.\d{1,2})*[.)]\s*)/, "");
+                        var rewrite = (s2 !== it.tx);
+                        if (O.fix) { s2 = fixText(s2, idx); rewrite = true; }
+                        if (rewrite) {
+                            it.p.RemoveAllElements();
+                            it.p.AddText(s2);
+                        }
+                        if (nrm) P(it.p, "SetStyle", nrm);
+                        P(it.p, "SetNumbering", levels[0]);
+                        t("шрифт текста", function () {
+                            var n = it.p.GetElementsCount();
+                            for (var e = 0; e < n; e++) {
+                                var el = it.p.GetElement(e);
+                                if (el && el.GetClassType() === "run") {
+                                    el.SetFontFamily(C.font);
+                                    el.SetFontSize(C.size);
+                                    el.SetBold(false);
+                                    el.SetColor(0, 0, 0, false);
+                                }
+                            }
+                        });
+                    })(items[q2], q2);
                 }
                 return done("элементов: " + items.length + " (Enter продолжает список, Tab делает уровень)");
             }
